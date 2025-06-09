@@ -102,6 +102,7 @@ def merging():
 
         merged_df_file_path = age_dir_path + 'Age Groups With true_start/' + f"{age_group_file_name}"
         merged_df.to_csv(merged_df_file_path, sep='\t', index=False)
+        print(f"Done saving the file {merged_df_file_path}")
 
         # After merging, dropping the 'transcript_id' column - no more use
         merged_df.drop(columns=['transcript_id'], axis=1, inplace=True)
@@ -124,10 +125,13 @@ def merging():
         # Saving the NON uniques after summing
         non_unique_tss_file_path = age_dir_path + 'NON_UniqueTSS/' + f"NON_UniqueTSS_{age_group_file_name}"
         df_duplicates_combined.to_csv(non_unique_tss_file_path, sep='\t', index=False)
+        print(f"Done saving the file {non_unique_tss_file_path}")
 
         # Saving the uniques
         unique_tss_file_path = age_dir_path + 'UniqueTSS/' + f"UniqueTSS_{age_group_file_name}"
         df_unique.to_csv(unique_tss_file_path, sep='\t', index=False)
+        print(f"Done saving the file {unique_tss_file_path}")
+        print(f"\n_____________________________\n")
 
 
 merging()

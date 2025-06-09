@@ -89,49 +89,51 @@ def merging():
     age_dir_path = raw_path + 'Output Files/Age Groups/'
 
     for age_group_file_name in os.listdir(age_dir_path):
-        file_path = os.path.join(age_dir_path, age_group_file_name)
+        # Processing only files that ends with .csv
+        if age_group_file_name.endswith('.csv'):
+            file_path = os.path.join(age_dir_path, age_group_file_name)
 
-        age_group_df = pd.read_csv(file_path, delimiter='\t')
+            age_group_df = pd.read_csv(file_path, delimiter='\t')
 
-        # Cleaning - deleting numbers after the decimal point
-        for col in age_group_df.columns[:2]:
-            age_group_df[col] = age_group_df[col].str.replace(r'\.[A-Za-z0-9]+$', '', regex=True)
+            # Cleaning - deleting numbers after the decimal point
+            for col in age_group_df.columns[:2]:
+                age_group_df[col] = age_group_df[col].str.replace(r'\.[A-Za-z0-9]+$', '', regex=True)
 
-        # Merging the two dfs based on the 'transcript_id' column
-        merged_df = pd.merge(gene_annotation, age_group_df, on='transcript_id', how='inner')
+            # Merging the two dfs based on the 'transcript_id' column
+            merged_df = pd.merge(gene_annotation, age_group_df, on='transcript_id', how='inner')
 
-        merged_df_file_path = age_dir_path + 'Age Groups With true_start/' + f"{age_group_file_name}"
-        merged_df.to_csv(merged_df_file_path, sep='\t', index=False)
-        print(f"Done saving the file {merged_df_file_path}")
+            merged_df_file_path = age_dir_path + 'Age Groups With true_start/' + f"{age_group_file_name}"
+            merged_df.to_csv(merged_df_file_path, sep='\t', index=False)
+            print(f"Done saving the file {merged_df_file_path}")
 
-        # After merging, dropping the 'transcript_id' column - no more use
-        merged_df.drop(columns=['transcript_id'], axis=1, inplace=True)
-
-
-        # Creating Two Tables according to TSS - looking at the pair values of 'true_start' and 'gene_id'
-        # Mark duplicates based on both columns
-        duplicate_mask = merged_df.duplicated(subset=['true_start', 'gene_id'], keep=False)
-
-        # First table - NON-unique (true_start, gene_id) pairs
-        df_duplicates = merged_df[duplicate_mask].copy()
-        # Grouping rows based on (true_start, gene_id) pairs
-        df_duplicates_combined = df_duplicates.groupby(['true_start', 'gene_id'], as_index=False).sum()
-        df_duplicates_combined.sort_values(by='gene_id', inplace=True)
-
-        # Second table - unique (true_start, gene_id) pairs
-        df_unique = merged_df[~duplicate_mask].copy()
+            # After merging, dropping the 'transcript_id' column - no more use
+            merged_df.drop(columns=['transcript_id'], axis=1, inplace=True)
 
 
-        # Saving the NON uniques after summing
-        non_unique_tss_file_path = age_dir_path + 'NON_UniqueTSS/' + f"NON_UniqueTSS_{age_group_file_name}"
-        df_duplicates_combined.to_csv(non_unique_tss_file_path, sep='\t', index=False)
-        print(f"Done saving the file {non_unique_tss_file_path}")
+            # Creating Two Tables according to TSS - looking at the pair values of 'true_start' and 'gene_id'
+            # Mark duplicates based on both columns
+            duplicate_mask = merged_df.duplicated(subset=['true_start', 'gene_id'], keep=False)
 
-        # Saving the uniques
-        unique_tss_file_path = age_dir_path + 'UniqueTSS/' + f"UniqueTSS_{age_group_file_name}"
-        df_unique.to_csv(unique_tss_file_path, sep='\t', index=False)
-        print(f"Done saving the file {unique_tss_file_path}")
-        print(f"\n_____________________________\n")
+            # First table - NON-unique (true_start, gene_id) pairs
+            df_duplicates = merged_df[duplicate_mask].copy()
+            # Grouping rows based on (true_start, gene_id) pairs
+            df_duplicates_combined = df_duplicates.groupby(['true_start', 'gene_id'], as_index=False).sum()
+            df_duplicates_combined.sort_values(by='gene_id', inplace=True)
+
+            # Second table - unique (true_start, gene_id) pairs
+            df_unique = merged_df[~duplicate_mask].copy()
+
+
+            # Saving the NON uniques after summing
+            non_unique_tss_file_path = age_dir_path + 'NON_UniqueTSS/' + f"NON_UniqueTSS_{age_group_file_name}"
+            df_duplicates_combined.to_csv(non_unique_tss_file_path, sep='\t', index=False)
+            print(f"Done saving the file {non_unique_tss_file_path}")
+
+            # Saving the uniques
+            unique_tss_file_path = age_dir_path + 'UniqueTSS/' + f"UniqueTSS_{age_group_file_name}"
+            df_unique.to_csv(unique_tss_file_path, sep='\t', index=False)
+            print(f"Done saving the file {unique_tss_file_path}")
+            print(f"\n_____________________________\n")
 
 
 merging()

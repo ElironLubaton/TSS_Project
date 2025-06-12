@@ -4,11 +4,13 @@ import pandas as pd
 import numpy as np
 import os
 
-# raw path for PC
-raw_path = 'D:/Studies/MSc/First year/2 - Second semester/Research methods in Bioinformatics/Final_Project/GTEx_Data/'
+import math
+
+# # raw path for PC
+# raw_path = 'D:/Studies/MSc/First year/2 - Second semester/Research methods in Bioinformatics/Final_Project/GTEx_Data/'
 
 # # raw path for laptop
-# raw_path = 'C:/Users/eliro/Desktop/Studies/MSc/First year/2 - Second semester/Research methods in Bioinformatics/Final_Project/GTEx_Data/'
+raw_path = 'C:/Users/eliro/Desktop/Studies/MSc/First year/2 - Second semester/Research methods in Bioinformatics/Final_Project/GTEx_Data/'
 
 def separate_age_groups():
     # @title Making seperate files for each age group
@@ -136,7 +138,111 @@ def merging():
             print(f"\n_____________________________\n")
 
 
-merging()
+# merging()
+
+def shannon_eveness(sequence, spreading_percentage):#, TPM_OR_Readcount, ceil=True, min_eve=0):
+    """
+    Computes array's (isoforms splicing choices in a gene) diversity.
+
+    Args:
+        sequence: A list which simulates a gene, where each cell represent a different isoform.
+        spreading_percentage: An int which decides the spreading percentage we want to spread.
+        TPM_OR_Readcount: A string which decides whether to read TPM files or Transcript Read Counts file.
+        ceil: A boolean which decides whether to use ceiling.
+        min_eve: A boolean which decides whether to calculate the minimum diversity.
+
+    Returns:
+        An number which represent the diversity of isoforms in a selected gene.
+    """
+
+    # Converting the sequence to numpy array, so the operation would be faster
+    sequence = np.array(sequence)
+
+    # Calculating how many actual splice sites in total, meaning sites with readings > 0. We want that len will be > 1
+    # We don't want to use spreading on genes with 1 isoforms, this will return a value with maximum diversity - we return 0 diversity instead.
+    if len(sequence[sequence>0]) <= 1:
+        return 0
+
+    # Calculating the percentage of read counts we want to spread
+    p = ((sum(sequence)*(spreading_percentage/100)) / len(sequence))
+
+    # # Decides whether to use ceiling or not.
+    # # If we use TRC, and we define ceil==true, and 0<p<1 (greater than 0 in case we want no spreading), then we use ceiling
+    # if TPM_OR_Readcount == 'Transcript Read counts' and ceil and (0<p<1):
+    #     p = 1
 
 
+    # if min_eve: # If true, then we calcualte the minimum diversity
+    #     """ Minimum diversity: one isoform that contains all the reads in it.
+    #     for example: [1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    #     we take the minimum diversity of an arary.
+    #     for example: [250, 250, 250, 250, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    #     and we measure the minimum diversity as it has one isoform that contains all the reads in the array
+    #     like in the first example. The first element will have the sum of reads.
+    #     we add the p (spreading percentage) let's say that p=1%
+    #     for example: [1000+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10, 0+10]
+    #     """
+    #     sequence_new = [sum(sequence)+p] + [p for isoform_reads in sequence[1:]]
+    # else:
+    #     sequence_new = [isoform_reads+p for isoform_reads in sequence] # spreading
+    sequence_new = [isoform_reads+p for isoform_reads in sequence] # spreading
 
+    possible_ss = len(sequence_new) #computing how many POSSIBLE splice sites (including sites with 0 readings)
+    total_reads = sum(sequence_new) #computing how many readings in TOTAL.
+
+
+    #computing shannon's eveness index
+    index_value = 0
+    for splice_site in sequence_new:
+        x = splice_site/(total_reads)
+        if x!=0:
+            index_value += (x)*(math.log(x))
+
+    return round((-1*index_value) / (math.log(possible_ss)), 3)
+
+    # return (round(-1*index_value, 3) / math.log(possible_ss))
+
+
+def compute_div():
+    age_dir_path = raw_path + 'Output Files/Age Groups/NON_UniqueTSS_or_GENE/NON_UniqueTSS/'
+
+    for age_group_file_name in os.listdir(age_dir_path):
+        # Processing only files that ends with .csv
+        if age_group_file_name.endswith('.csv'):
+            file_path = os.path.join(age_dir_path, age_group_file_name)
+            age_group_df = pd.read_csv(file_path, delimiter='\t')
+
+            age_group_df.drop(columns=['true_start'], axis=1, inplace=True)
+            grouped_df = age_group_df.groupby('gene_id').agg(lambda x: shannon_eveness(list(x), 1)).reset_index()
+
+            age_group_df_file_path = age_dir_path + 'NON_Unique_Evenness_spreading_1/' + f"Div_spread1_{age_group_file_name}"
+            grouped_df.to_csv(age_group_df_file_path, sep='\t', index=False)
+            print(f"Done saving the file {age_group_df_file_path}")
+
+
+compute_div()
+
+raw_path = 'C:/Users/eliro/Desktop/Studies/MSc/First year/2 - Second semester/Research methods in Bioinformatics/Final_Project/GTEx_Data/'
+def sampid_tissue_diff():
+
+    att_path = raw_path + f'Output Files/'
+    att_df = pd.read_csv(att_path + 'Sample_Attributes_Phenotypes.txt', delimiter='\t')
+    att_df.drop(columns=['SMTSD', 'SEX', 'AGE'], axis=1, inplace=True)
+
+    tissues = ['Blood', 'Brain', 'Adipose Tissue', 'Muscle', 'Blood Vessel',
+               'Heart', 'Thyroid', 'Kidney', 'Uterus', 'Vagina', 'Breast', 'Skin',
+               'Salivary Gland', 'Adrenal Gland', 'Lung', 'Spleen', 'Pancreas',
+               'Esophagus', 'Stomach', 'Colon', 'Small Intestine', 'Prostate',
+               'Testis', 'Nerve', 'Liver', 'Pituitary', 'Ovary', 'Bladder',
+               'Cervix Uteri', 'Fallopian Tube']
+
+    for tissue in tissues:
+        att_df_tissue = att_df[att_df['SMTS'] == tissue].reset_index()
+        att_df_tissue.drop(columns=['SMTS'], axis=1, inplace=True)
+
+
+        output_path = att_path + f"Sample_ID_tissue/{tissue}_SAMPID.csv"
+        att_df_tissue.to_csv(output_path, sep='\t', index=False)
+
+
+# sampid_tissue_diff()

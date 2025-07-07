@@ -82,6 +82,24 @@ def loading_annotation():
     # Dropping the columns strand, end and start
     gene_annotation.drop(columns=['strand', 'end', 'start'], axis=1, inplace=True)
 
+    
+    # gene_annotation = annotation.filter_feature_of_type(['transcript']).attributes_to_columns()[
+    #     ['seq_id', 'transcript_type', 'transcript_id', 'start', 'end', 'strand']].join(acc_n)
+    # gene_annotation = gene_annotation[~gene_annotation.seq_id.isin(['chrX', 'chrY', 'chrM'])]          # Filtering genes that are inside chromoses X, Y and Mitochond
+    # gene_annotation = gene_annotation[gene_annotation.transcript_type.isin(['protein_coding',None])]   # Filtering out genes that are NOT protein coding
+    #     # Remove the last column of df - because it's just filled with NaNs
+    # gene_annotation.drop(gene_annotation.columns[-1], axis=1, inplace=True)
+
+    # # Adding 2 new columns which will be the start/end site according to the strand (+ or -)
+    # gene_annotation['true_start'] = np.where(  # Adding true_start column
+    #     gene_annotation['strand'] == '+',
+    #     gene_annotation['start'],
+    #     gene_annotation['end']
+    # )
+
+    # # Dropping the columns strand, end and start
+    # gene_annotation.drop(columns=['seq_id', 'transcript_type', 'strand', 'end', 'start'], axis=1, inplace=True)
+    
     return gene_annotation
 
 

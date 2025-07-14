@@ -264,3 +264,31 @@ def sampid_tissue_diff():
 
 
 # sampid_tissue_diff()
+
+
+def filt_genes_via_tss():
+    """
+    This function is used for filtering OUT genes that have many isoforms, but only a single TSS.
+    """
+
+    age_dir_path = raw_path + 'Output Files/Age Groups/NON_UniqueTSS_or_GENE/'
+
+    for age_group_file_name in os.listdir(age_dir_path):
+        # Processing only files that ends with .csv
+        if age_group_file_name.endswith('.csv'):
+            file_path = os.path.join(age_dir_path, age_group_file_name)
+
+            age_group_df = pd.read_csv(file_path, delimiter='\t')
+
+            # Keep only rows where 'gene_id' is duplicated (i.e., appears more than once)
+            non_unique_gene_ids_df = age_group_df[age_group_df['gene_id'].duplicated(keep=False)].copy()
+            non_unique_gene_ids_df.reset_index(drop=True, inplace=True)
+
+
+            # Saving the NON uniques after summing
+            non_unique_tss_file_path = age_dir_path + 'NON_UniqueTSS/' + f"NON_UniqueTSS_{age_group_file_name}"
+            non_unique_gene_ids_df.to_csv(non_unique_tss_file_path, sep='\t', index=False)
+            print(f"Done saving the file {non_unique_tss_file_path}")
+
+
+filt_genes_via_tss()
